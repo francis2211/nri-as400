@@ -87,6 +87,8 @@ public class GetDiskUsage {
                             .append("\"event_type\":\"AS400:DiskUsageEvent\",")
                             .append("\"hostName\":\"").append(CommonUtil.getHostName(as400)).append("\",")
                             .append("\"includeInIseriesEntity\":true,")
+                            .append("\"entityType\":\"IBM_ISERIES\",")
+                            .append("\"nr.entityType\":\"IBM_ISERIES\",")
                             .append("\"aspNumber\":\"").append(aspNumber).append("\",")
                             .append("\"unitNumber\":\"").append(unitNumber).append("\",")
                             .append("\"unitType\":\"").append(unitType).append("\",")

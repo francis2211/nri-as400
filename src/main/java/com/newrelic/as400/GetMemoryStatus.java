@@ -499,6 +499,16 @@ public class GetMemoryStatus {
 						"\"includeInIseriesEntity\":" +
 						true +
 						"," +
+						"\"entityType\":" +
+						'"' +
+						"IBM_ISERIES" +
+						'"' +
+						"," +
+						"\"nr.entityType\":" +
+						'"' +
+						"IBM_ISERIES" +
+						'"' +
+						"," +
 						"\"systemName\":" +
 						'"' +
 						s_ssts0400_systemName +

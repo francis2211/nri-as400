@@ -71,6 +71,8 @@ public class GetLongRunningSqlInfo {
                         .append("\"systemName\":\"").append(systemName).append("\",")
                         .append("\"hostName\":\"").append(CommonUtil.getHostName(as400)).append("\",")
                         .append("\"includeInIseriesEntity\":true,")
+                        .append("\"entityType\":\"IBM_ISERIES\",")
+                        .append("\"nr.entityType\":\"IBM_ISERIES\",")
                         .append("\"jobName\":\"").append(jsonEscape(jobName == null ? "" : jobName.trim())).append("\",")
                         .append("\"jobStatus\":\"").append(jsonEscape(jobStatus == null ? "" : jobStatus.trim())).append("\",")
                         .append("\"subsystem\":\"").append(jsonEscape(subsystem == null ? "" : subsystem.trim())).append("\",")

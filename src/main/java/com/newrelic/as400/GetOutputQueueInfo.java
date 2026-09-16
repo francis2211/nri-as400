@@ -55,6 +55,8 @@ public class GetOutputQueueInfo {
                         .append("\"systemName\":\"").append(systemName).append("\",")
                         .append("\"hostName\":\"").append(CommonUtil.getHostName(as400)).append("\",")
                         .append("\"includeInIseriesEntity\":true,")
+                        .append("\"entityType\":\"IBM_ISERIES\",")
+                        .append("\"nr.entityType\":\"IBM_ISERIES\",")
                         .append("\"outputQueueName\":\"").append(outputQueueName == null ? "" : outputQueueName.trim()).append("\",")
                         .append("\"outputQueueLibrary\":\"").append(outputQueueLibrary == null ? "" : outputQueueLibrary.trim()).append("\",")
                         .append("\"outputQueueStatus\":\"").append(outputQueueStatus == null ? "" : outputQueueStatus.trim()).append("\",")

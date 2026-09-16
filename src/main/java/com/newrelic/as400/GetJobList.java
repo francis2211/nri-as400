@@ -494,6 +494,16 @@ public class GetJobList {
 					"\"includeInIseriesEntity\":" +
 					true +
 					"," +
+					"\"entityType\":" +
+					'"' +
+					"IBM_ISERIES" +
+					'"' +
+					"," +
+					"\"nr.entityType\":" +
+					'"' +
+					"IBM_ISERIES" +
+					'"' +
+					"," +
 					"\"systemName\":" +
 					'"' +
 					s_systemName +

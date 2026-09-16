@@ -64,6 +64,8 @@ public class GetJobTempStorage {
                         .append("\"systemName\":\"").append(systemName).append("\",")
                         .append("\"hostName\":\"").append(CommonUtil.getHostName(as400)).append("\",")
                         .append("\"includeInIseriesEntity\":true,")
+                        .append("\"entityType\":\"IBM_ISERIES\",")
+                        .append("\"nr.entityType\":\"IBM_ISERIES\",")
                         .append("\"jobName\":\"").append(jobName == null ? "" : jobName.trim()).append("\",")
                         .append("\"jobType\":\"").append(jobType == null ? "" : jobType.trim()).append("\",")
                         .append("\"jobStatus\":\"").append(jobStatus == null ? "" : jobStatus.trim()).append("\",")

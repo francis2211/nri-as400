@@ -63,6 +63,8 @@ public class GetJobQueueInfo {
                         .append("\"systemName\":\"").append(systemName).append("\",")
                         .append("\"hostName\":\"").append(CommonUtil.getHostName(as400)).append("\",")
                         .append("\"includeInIseriesEntity\":true,")
+                        .append("\"entityType\":\"IBM_ISERIES\",")
+                        .append("\"nr.entityType\":\"IBM_ISERIES\",")
                         .append("\"jobQueueName\":\"").append(jobQueueName == null ? "" : jobQueueName.trim()).append("\",")
                         .append("\"jobQueueLibrary\":\"").append(jobQueueLibrary == null ? "" : jobQueueLibrary.trim()).append("\",")
                         .append("\"jobQueueStatus\":\"").append(jobQueueStatus == null ? "" : jobQueueStatus.trim()).append("\",")

@@ -497,6 +497,16 @@ public class GetSystemStatus {
 					"\"includeInIseriesEntity\":" +
 					true +
 					"," +
+					"\"entityType\":" +
+					'"' +
+					"IBM_ISERIES" +
+					'"' +
+					"," +
+					"\"nr.entityType\":" +
+					'"' +
+					"IBM_ISERIES" +
+					'"' +
+					"," +
 					"\"numberActiveJobsInSystem\":" +
 					s_numberActiveJobsInSystem +
 					"," +

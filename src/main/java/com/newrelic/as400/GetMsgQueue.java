@@ -116,6 +116,16 @@ public class GetMsgQueue {
 							"\"includeInIseriesEntity\":" +
 							true +
 							"," +
+							"\"entityType\":" +
+							'"' +
+							"IBM_ISERIES" +
+							'"' +
+							"," +
+							"\"nr.entityType\":" +
+							'"' +
+							"IBM_ISERIES" +
+							'"' +
+							"," +
 							"\"queue\":" +
 							'"' +
 							strQueue +
