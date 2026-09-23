@@ -76,3 +76,37 @@ instances:
       passwd: user0465
     labels:
       env: production
+  - name: pub400_long_running_batch_jobs
+    command: long-running-batch-jobs
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+      threshold: 3600
+    labels:
+      env: production
+  - name: pub400_interactive_jobs
+    command: interactive-job-info
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+      subsystem: QINTER
+    labels:
+      env: production
+  - name: pub400_network_interfaces
+    command: network-interface-status
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+    labels:
+      env: production
+  - name: pub400_configuration_status
+    command: configuration-status
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+    labels:
+      env: production

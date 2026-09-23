@@ -38,6 +38,10 @@ iSeries / AS400 monitoring solution for New Relic Infrastructure. Actually split
   - [as400-output-queue-info - iSeries Output Queue Info](#config-as400-output-queue-info)
   - [as400-job-temp-storage - iSeries Job Temporary Storage](#config-as400-job-temp-storage)
   - [as400-long-running-sql - iSeries Long-Running SQL / Blocked Jobs](#config-as400-long-running-sql)
+  - [as400-long-running-batch-jobs - iSeries Long-Running Batch Jobs](#config-as400-long-running-batch-jobs)
+  - [as400-interactive-job-info - iSeries Interactive Job CPU / Response Time](#config-as400-interactive-job-info)
+  - [as400-network-interface-status - iSeries IP Interface Status](#config-as400-network-interface-status)
+  - [as400-configuration-status - iSeries Line/Controller/Device Status](#config-as400-configuration-status)
 - run `nri-as400/install_linux.sh`
 
 ### Configuring the OHIs
@@ -69,6 +73,18 @@ Configuration for monitoring the top active jobs by temporary storage consumptio
 #### as400-long-running-sql
 Configuration for monitoring long-running SQL statements and blocked/contended jobs.
 
+#### as400-long-running-batch-jobs
+Configuration for monitoring batch jobs whose elapsed run time exceeds a configurable threshold — a classic "silent problem" (a stuck or abnormally slow batch job produces no error message on its own).
+
+#### as400-interactive-job-info
+Configuration for monitoring interactive job CPU usage and response time — flags a single interactive user hogging the CPU, or response times spiking, neither of which raises an inquiry message.
+
+#### as400-network-interface-status
+Configuration for monitoring IP interface status — an interface that fails or is left inactive silently stops carrying traffic without alerting QSYSOPR.
+
+#### as400-configuration-status
+Configuration for monitoring line, controller, network server description, and device configuration status — a resource varied off or failed does not by itself demand an operator response.
+
 ### Testing with `nri-as400-test.sh` <a id="testing-with-nri-as400-testsh"></a>
 This collection of OHIs comes with `nri-as400-test.sh`, a shell script to verify:
 * connectivity to AS400 host
@@ -80,7 +96,7 @@ This collection of OHIs comes with `nri-as400-test.sh`, a shell script to verify
 To use `nri-as400-test.sh`:
 1. Edit `nri-as400-test.sh`, setting the environment variables at the top to the settings you will use in this configuration.
 2. If not executable, run `chmod +x nri-as400-test.sh`
-3. Run `./nri-as400-test.sh [job-list|memory-status|message-queue|system-status|disk-usage|job-queue-info|output-queue-info|job-temp-storage|long-running-sql]`
+3. Run `./nri-as400-test.sh [job-list|memory-status|message-queue|system-status|disk-usage|job-queue-info|output-queue-info|job-temp-storage|long-running-sql|long-running-batch-jobs|interactive-job-info|network-interface-status|configuration-status]`
 
 This will allow you to test the configuration and ensure that the credentials and parameters are correct for each of the supported commands, including the `job-temp-storage` and `long-running-sql` commands.
 
@@ -312,6 +328,110 @@ instances:
 * Idle listener/prestart jobs (e.g. `QSQSRVR`, `QP0ZSPWT`, subsystem monitors) normally sit in a dequeue or condition wait between requests — that is excluded by design, since it is not indicative of a problem.
 * This command retrieves more detail per job (including current SQL statement text) than the other OHIs, and so is a heavier query. [Test using `nri-as400-test.sh long-running-sql`](#testing-with-nri-as400-testsh) and note the time it takes to complete. If longer than 60 seconds, increase the `interval` in `nri-as400-definition.yml` to be at least as long as that time.
 
+### as400-long-running-batch-jobs - iSeries Long-Running Batch Jobs <a id="config-as400-long-running-batch-jobs"></a>
+
+```yaml
+instances:
+  - name: pub400_long_running_batch_jobs
+    command: long-running-batch-jobs
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+      threshold: 3600
+    labels:
+      env: production
+```
+
+* `name`: The name of the instance, usually the host and "_long_running_batch_jobs".
+* `as400host`: The iSeries host.
+* `userid`: The user that has access to active job information.
+* `passwd`: The password for the user.
+* `threshold`: Optional. Number of seconds a batch job (`JOB_TYPE = 'BCH'`) must have been active before it is reported. Defaults to `3600` (1 hour).
+* `env`: You may specify the enviroment.
+
+#### Notes
+* Implements "silent problem" monitoring scenario #1 from the IT Jungle article ["Admin Alert: Seven Things You Should Be Monitoring On Your System"](https://www.itjungle.com/2012/10/03/fhg100312-story03/): long-running batch jobs. A batch job stuck in a loop or waiting on a lock does not raise an inquiry message on its own — it just keeps running — so it must be actively polled for.
+* One event is emitted per active batch job whose elapsed run time (derived from `JOB_ACTIVE_TIME`) meets or exceeds `threshold`, via the `QSYS2.ACTIVE_JOB_INFO` SQL Service table function.
+* Execution interval should be fine at 60 seconds.
+
+### as400-interactive-job-info - iSeries Interactive Job CPU / Response Time <a id="config-as400-interactive-job-info"></a>
+
+```yaml
+instances:
+  - name: pub400_interactive_jobs
+    command: interactive-job-info
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+      subsystem: QINTER
+    labels:
+      env: production
+```
+
+* `name`: The name of the instance, usually the host and "_interactive_jobs".
+* `as400host`: The iSeries host.
+* `userid`: The user that has access to active job information.
+* `passwd`: The password for the user.
+* `subsystem`: Optional. The interactive subsystem to filter on. Defaults to `QINTER`.
+* `env`: You may specify the enviroment.
+
+#### Notes
+* Implements "silent problem" monitoring scenarios #6 and #7 from the IT Jungle article ["Admin Alert: Seven Things You Should Be Monitoring On Your System"](https://www.itjungle.com/2012/10/03/fhg100312-story03/): interactive users consuming a large amount of CPU, and interactive response time spiking. Neither condition posts an inquiry message — they just quietly degrade the system for every other interactive user.
+* One event is emitted per interactive job in the target subsystem, including CPU percentage and average response time per interaction, via the `QSYS2.ACTIVE_JOB_INFO` SQL Service table function.
+* Execution interval should be fine at 60 seconds.
+
+### as400-network-interface-status - iSeries IP Interface Status <a id="config-as400-network-interface-status"></a>
+
+```yaml
+instances:
+  - name: pub400_network_interfaces
+    command: network-interface-status
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+    labels:
+      env: production
+```
+
+* `name`: The name of the instance, usually the host and "_network_interfaces".
+* `as400host`: The iSeries host.
+* `userid`: The user that has access to network interface information.
+* `passwd`: The password for the user.
+* `env`: You may specify the enviroment.
+
+#### Notes
+* Implements "silent problem" monitoring scenario #5 from the IT Jungle article ["Admin Alert: Seven Things You Should Be Monitoring On Your System"](https://www.itjungle.com/2012/10/03/fhg100312-story03/): IP interfaces not active. An interface that fails or is left inactive after a change does not post an inquiry message — traffic on it just silently stops.
+* One event is emitted per configured IPv4/IPv6 interface, including an `isActive` boolean derived from `INTERFACE_STATUS`, via the `QSYS2.NETSTAT_INTERFACE_INFO` SQL Service view.
+* This changes infrequently; an execution interval of 300 seconds (5 minutes) or longer is appropriate.
+
+### as400-configuration-status - iSeries Line/Controller/Device Status <a id="config-as400-configuration-status"></a>
+
+```yaml
+instances:
+  - name: pub400_configuration_status
+    command: configuration-status
+    arguments:
+      as400host: pub400.com
+      userid: USER0465
+      passwd: user0465
+    labels:
+      env: production
+```
+
+* `name`: The name of the instance, usually the host and "_configuration_status".
+* `as400host`: The iSeries host.
+* `userid`: The user that has access to configuration status information.
+* `passwd`: The password for the user.
+* `env`: You may specify the enviroment.
+
+#### Notes
+* Implements "silent problem" monitoring scenario #4 from the IT Jungle article ["Admin Alert: Seven Things You Should Be Monitoring On Your System"](https://www.itjungle.com/2012/10/03/fhg100312-story03/): critical lines, controllers, or devices that aren't active. A resource that fails or is left varied off does not itself demand an operator response — it just sits silently unavailable.
+* One event is emitted per line, controller, network server description, or device object whose status is not one of `ACTIVE`, `AVAILABLE`, `VARIED ON`, `OPERATIONAL`, or `ON`, via the `SYSTOOLS.CONFIGURATION_STATUS` SQL Service view (the SQL equivalent of `WRKCFGSTS`). Only unhealthy resources are returned, since a typical partition has hundreds of configuration objects.
+* This changes infrequently; an execution interval of 300 seconds (5 minutes) or longer is appropriate.
+
 
 ## Data Types
 
@@ -525,6 +645,76 @@ Attributes:
 - `databaseLockWaitTimeMs` - Cumulative time, in milliseconds, the job's initial thread has waited on database locks.
 - `nonDatabaseLockWaitTimeMs` - Cumulative time, in milliseconds, the job's initial thread has waited on non-database locks.
 - `lockWaitTimeMs` - `max(databaseLockWaitTimeMs, nonDatabaseLockWaitTimeMs)` - the clearest available signal for how long a blocked job (`LCKW`/`MTXW`/`SEMW`/`LSPW`/`MSGW`) has been stuck.
+
+### as400-long-running-batch-jobs
+Event Type: `AS400:LongRunningBatchJobEvent`
+
+Attributes:
+- `event_type` - Required for all OHI events.
+- `systemName` - iSeries name.
+- `hostName` - The identifier reported for `IBM_ISERIES` entity enrichment; the `as400host` value, or `hostname_override` if set.
+- `includeInIseriesEntity` - Always `true`; signals this event should be used to enrich the `IBM_ISERIES` entity for `hostName`.
+- `jobName` - The qualified job name, in `number/user/name` format.
+- `subsystem` - The subsystem the job is running in.
+- `jobStatus` - The status of the job's initial thread.
+- `jobQueue` - The job queue the job was submitted from, if known.
+- `jobQueueLibrary` - The library containing `jobQueue`.
+- `authorizationName` - The user profile the job is running under.
+- `functionType` - The type of high-level function currently being performed by the job (e.g. `PGM`, `CMD`).
+- `function` - The name of the program or command currently being run by the job.
+- `runningSeconds` - How long, in seconds, the job has been active.
+- `thresholdSeconds` - The configured threshold (`threshold` argument) that this job's `runningSeconds` met or exceeded to be reported.
+- `elapsedCpuPercentage` - The percent of processing unit time attributed to this job.
+
+### as400-interactive-job-info
+Event Type: `AS400:InteractiveJobEvent`
+
+Attributes:
+- `event_type` - Required for all OHI events.
+- `systemName` - iSeries name.
+- `hostName` - The identifier reported for `IBM_ISERIES` entity enrichment; the `as400host` value, or `hostname_override` if set.
+- `includeInIseriesEntity` - Always `true`; signals this event should be used to enrich the `IBM_ISERIES` entity for `hostName`.
+- `jobName` - The qualified job name, in `number/user/name` format.
+- `authorizationName` - The interactive user profile.
+- `subsystem` - The subsystem the job is running in (e.g. `QINTER`).
+- `jobStatus` - The status of the job's initial thread.
+- `elapsedCpuPercentage` - The percent of processing unit time attributed to this job during the measurement interval — a sustained high value flags a single interactive user hogging the CPU.
+- `elapsedCpuTimeMs` - Total CPU time spent during the measurement interval, in milliseconds.
+- `elapsedTotalResponseTimeMs` - Cumulative interactive response time across all interactions during the measurement interval, in milliseconds.
+- `elapsedInteractionCount` - The number of interactions (screen I/Os) during the measurement interval.
+- `avgResponseTimeSeconds` - `elapsedTotalResponseTimeMs / elapsedInteractionCount`, converted to seconds — the direct signal for interactive response time spiking; `0` when there have been no interactions since the last stats reset.
+- `elapsedTotalDiskIoCount` - Total disk I/O operations during the measurement interval.
+
+### as400-network-interface-status
+Event Type: `AS400:NetworkInterfaceEvent`
+
+Attributes:
+- `event_type` - Required for all OHI events.
+- `systemName` - iSeries name.
+- `hostName` - The identifier reported for `IBM_ISERIES` entity enrichment; the `as400host` value, or `hostname_override` if set.
+- `includeInIseriesEntity` - Always `true`; signals this event should be used to enrich the `IBM_ISERIES` entity for `hostName`.
+- `connectionType` - `IPV4` or `IPV6`.
+- `internetAddress` - The IP address of the interface.
+- `lineDescription` - The communications line description associated with the interface (or `*LOOPBACK` / `*VIRTUALIP` for logical interfaces).
+- `interfaceStatus` - The current status of the interface, e.g. `ACTIVE`, `INACTIVE`, `FAILED`, `FAILED (TCP)`, `RCYCNL`, `RCYPND`, `STARTING`, `ENDING`.
+- `interfaceLineType` - The type of line associated with the interface (e.g. `ETHLIN`, `VETH`).
+- `networkAddress` - The network address the interface belongs to.
+- `subnetMask` - The subnet mask of the interface.
+- `isActive` - `true` when `interfaceStatus` is `ACTIVE`, `false` otherwise — the direct alerting signal for this event.
+
+### as400-configuration-status
+Event Type: `AS400:ConfigurationStatusEvent`
+
+Attributes:
+- `event_type` - Required for all OHI events.
+- `systemName` - iSeries name.
+- `hostName` - The identifier reported for `IBM_ISERIES` entity enrichment; the `as400host` value, or `hostname_override` if set.
+- `includeInIseriesEntity` - Always `true`; signals this event should be used to enrich the `IBM_ISERIES` entity for `hostName`.
+- `configurationDescription` - The name of the line, controller, network server description, or device.
+- `configurationType` - The type of configuration object (`*LIN`, `*CTL`, `*DEV`, `*NWS`, etc.).
+- `configurationStatus` - The current status of the object, e.g. `VARIED OFF`, `FAILED`, `RECOVERY PENDING`, `DAMAGED`. Only objects not in a healthy state are reported.
+- `textDescription` - The object's text description, as configured.
+- `jobName` - The job currently controlling/using the resource, if any.
 
 
 ## Dashboard
