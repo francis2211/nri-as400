@@ -41,6 +41,18 @@ case "$1" in
     "disk-usage")
       execute_class "GetDiskUsage" $1
       ;;
+    "long-running-batch-jobs")
+      execute_class "GetLongRunningBatchJobsInfo" $1
+      ;;
+    "interactive-job-info")
+      execute_class "GetInteractiveJobInfo" $1
+      ;;
+    "network-interface-status")
+      execute_class "GetNetworkInterfaceStatus" $1
+      ;;
+    "configuration-status")
+      execute_class "GetConfigurationStatus" $1
+      ;;
     *)
       usage
       ;;

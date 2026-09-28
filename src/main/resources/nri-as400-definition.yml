@@ -1,6 +1,6 @@
 name: com.newrelic.as400
 protocol_version: 1
-description: Monitors iSeries (AS400) - jobs, message queues, system status, memory status, disk usage, job queues, output queues, job temp storage, and long-running SQL
+description: Monitors iSeries (AS400) - jobs, message queues, system status, memory status, disk usage, job queues, output queues, job temp storage, long-running SQL, long-running batch jobs, interactive job CPU/response time, network interface status, and configuration (line/controller/device) status
 commands:
   job-list:
     command:
@@ -74,3 +74,35 @@ commands:
       - -Dcom.ibm.as400.access.AS400.guiAvailable=false
       - com.newrelic.as400.GetLongRunningSqlInfo
     interval: 60
+  long-running-batch-jobs:
+    command:
+      - /usr/bin/java
+      - -cp
+      - ./bin/nri-as400.jar
+      - -Dcom.ibm.as400.access.AS400.guiAvailable=false
+      - com.newrelic.as400.GetLongRunningBatchJobsInfo
+    interval: 60
+  interactive-job-info:
+    command:
+      - /usr/bin/java
+      - -cp
+      - ./bin/nri-as400.jar
+      - -Dcom.ibm.as400.access.AS400.guiAvailable=false
+      - com.newrelic.as400.GetInteractiveJobInfo
+    interval: 60
+  network-interface-status:
+    command:
+      - /usr/bin/java
+      - -cp
+      - ./bin/nri-as400.jar
+      - -Dcom.ibm.as400.access.AS400.guiAvailable=false
+      - com.newrelic.as400.GetNetworkInterfaceStatus
+    interval: 300
+  configuration-status:
+    command:
+      - /usr/bin/java
+      - -cp
+      - ./bin/nri-as400.jar
+      - -Dcom.ibm.as400.access.AS400.guiAvailable=false
+      - com.newrelic.as400.GetConfigurationStatus
+    interval: 300
